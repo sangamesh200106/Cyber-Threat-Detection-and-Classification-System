@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Confirm suspicious input</title></head>
+  <body>
+    <h2>Suspicious input detected ({{ severity }})</h2>
+    <p>Detected pattern(s): <strong>{{ patterns|join(', ') }}</strong></p>
+
+    <h3>Preview (escaped, safe)</h3>
+    <pre>{{ preview }}</pre>
+
+    <form action="{{ url_for('confirm_action', token=token) }}" method="post">
+      <button name="action" value="allow" type="submit">Allow execution (sandboxed)</button>
+      <button name="action" value="deny" type="submit">Deny</button>
+    </form>
+
+    <p>Origin: {{ origin }}</p>
+  </body>
+</html>

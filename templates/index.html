@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NIDS Control Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+    h1 { color: #333; }
+    .controls { margin-bottom: 20px; }
+    .controls button { padding: 10px 20px; margin: 5px; border: none; cursor: pointer; border-radius: 6px; }
+    .on { background: green; color: white; }
+    .off { background: red; color: white; }
+    #alerts { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-height: 400px; overflow-y: auto; }
+    .alert-line { padding: 5px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .HIGH { color: red; font-weight: bold; }
+    .NORMAL { color: gray; }
+  </style>
+</head>
+<body>
+  <h1>Network Intrusion Detection System</h1>
+  <div class="controls">
+    <button class="on" onclick="nidsOn()">NIDS ON</button>
+    <button class="off" onclick="nidsOff()">NIDS OFF</button>
+    <button onclick="clearAlerts()">Clear Alerts</button>
+  </div>
+
+  <h2>Live Alerts</h2>
+  <div id="alerts"><p>No alerts yet...</p></div>
+
+  <script>
+    function fetchAlerts() {
+      fetch('/get_alerts')
+        .then(r => r.json())
+        .then(data => {
+          let container = document.getElementById('alerts');
+          container.innerHTML = '';
+          if (data.length === 0) {
+            container.innerHTML = '<p>No alerts yet...</p>';
+            return;
+          }
+          data.reverse().forEach(alert => {
+            let div = document.createElement('div');
+            div.className = 'alert-line ' + alert.severity;
+            div.textContent = `[${alert.severity}] ${alert.time} | IP: ${alert.ip} | Payload: ${alert.payload}`;
+            container.appendChild(div);
+
+            // If HIGH severity → show confirm box
+            if (alert.severity === "HIGH") {
+              if (confirm(`⚠️ Malicious Activity Detected!\nIP: ${alert.ip}\nTime: ${alert.time}\nPayload: ${alert.payload}\n\nDo you want to ALLOW this request?`)) {
+                console.log("User allowed request.");
+              } else {
+                console.log("User blocked request.");
+              }
+            }
+          });
+        });
+    }
+
+    function clearAlerts() {
+      fetch('/clear_alerts').then(() => {
+        document.getElementById('alerts').innerHTML = '<p>No alerts yet...</p>';
+      });
+    }
+    function nidsOn() { fetch('/nids_on'); }
+    function nidsOff() { fetch('/nids_off'); }
+
+    // auto refresh every 5s
+    fetchAlerts();
+    setInterval(fetchAlerts, 5000);
+  </script>
+</body>
+</html>
